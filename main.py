@@ -1,19 +1,16 @@
 # testing game running protocols:
-import random
-from pygame import mixer
-import pygame as pg
 import json
+import random
 from pprint import pprint
-
-
+import new_game_txt_box as NewGame
+import pygame as pg
+from pygame import mixer
 
 pg.init()
 pg.font.init()
 
 # SETTING WINDOW
 WIDTH, HEIGHT = 800, 600
-
-
 
 # IMAGE SETTING:
 icon = pg.image.load('img/spaceship.png')
@@ -49,6 +46,39 @@ pg.display.set_caption("ShipX")
 
 
 # CLASSES
+class TextBox():
+    font = pg.font.Font(None, 32)
+    colors_dict = {
+        'active': pg.Color('dodgerblue2'),
+        'inactive': pg.Color('lightskyblue3')
+    }
+
+    def __init__(self, x = WIDTH/2 - 70, y = 100, w = 140, h = 32):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+        self.text = ''
+        self.active = False
+        self.color = self.colors_dict['inactive']
+        self.rect = pg.Rect(self.x, self.y, self.w, self.h)
+        self.surface = self.font.render(self.text, True, self.color)
+
+    def clicked(self):
+        if self.active:
+            self.active = False
+            self.color = self.colors_dict['inactive']
+        else:
+            self.active = True
+            self.color = self.colors_dict['active']
+
+    def draw(self):
+        self.surface = self.font.render(self.text, True, self.color)
+        self.w = max(200, self.surface.get_width() + 10)
+        # screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+        screen.blit(self.surface, (self.x + 1, self.y + 5))
+        pg.draw.rect(screen, self.color, self.rect, 2)
+
 class Spritesheet():
     def __init__(self, obj):
         json_path = f'img/{obj}/{obj}.json'
@@ -70,11 +100,11 @@ class Spritesheet():
             for i in self.SPRITES['frames']:
                 print(i)
                 frame_values = []
-                
+
                 for x in self.SPRITES['frames'][i]['frame'].values():
                     print(x)
                     frame_values.append(x)
-                
+
                 self.frames.append(self.get_image(frame_values[0], frame_values[1], frame_values[2], frame_values[3]))
                 frame_values.clear()
             pprint(self.frames)
@@ -82,7 +112,8 @@ class Spritesheet():
     def get_image(self, x, y, width, height):
         image = pg.Surface((width, height))
         image.blit(self.spritesheet, (0, 0), (x, y, width, height))
-        return image # TODO: Change the bullet sprites to these OR: Make new type of bullet
+        return image  # TODO: Change the bullet sprites to these OR: Make new type of bullet
+
 
 class Bullet:
     def __init__(self, x, y):
@@ -103,10 +134,10 @@ class Bullet:
 
     def move_bullet(self):
         self.y -= self.vel
-        
+
     def collision(self, obj):
         return collide(self, obj)
-    
+
     def off_screen(self):
         if self.y <= HEIGHT and self.y >= 0:
             return False
@@ -114,7 +145,8 @@ class Bullet:
             print(f'bullet {self} went offscreen')
             return True
 
-class BigLaser(Bullet): # TODO: ANIMATION NOT WORKING
+
+class BigLaser(Bullet):  # TODO: ANIMATION NOT WORKING
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -134,6 +166,7 @@ class BigLaser(Bullet): # TODO: ANIMATION NOT WORKING
 
     def move_laser(self):
         self.y -= self.vel
+
 
 class Ship:
     def __init__(self, x, y, hp=100):
@@ -155,9 +188,9 @@ class Ship:
             b = BigLaser(self.x, self.y)
             self.shooting_count = 0
         else:
-            b = Bullet(self.x + self.get_width()/2 - 16, self.y)
-        if len(self.bullets) >= 10: # WORKING: if the list of bullets gets too long
-            self.bullets.reverse()  #          it deletes the oldest bullet
+            b = Bullet(self.x + self.get_width() / 2 - 16, self.y)
+        if len(self.bullets) >= 10:  # WORKING: if the list of bullets gets too long
+            self.bullets.reverse()  # it deletes the oldest bullet
             self.bullets.pop()
             print('just popped a bullet')
         self.bullets.append(b)
@@ -186,11 +219,13 @@ class Ship:
                     if b.collision(obj):
                         obj.health -= 1
                         try:
-                            self.bullets.remove(b) # find and fix this error self.bullets.remove(x) -- x not in list [erro que ocorreu mas nao houve repeticao]
-                        except:                    # UPDATE: Error still there, but with try and except it is possible to ignore it
+                            self.bullets.remove(
+                                b)  # find and fix this error self.bullets.remove(x) -- x not in list [erro que ocorreu mas nao houve repeticao]
+                        except:  # UPDATE: Error still there, but with try and except it is possible to ignore it
                             print('suposto crash')
                         print('bullet collided')
                         print(f'asteroid {obj}\nsupposedly took 1 damage and has {obj.health} hp')
+
 
 class Asteroid:
     ASTEROID_DIC = {
@@ -215,12 +250,21 @@ class Asteroid:
     # def rotate(self):
     #     self.img = pg.transform.rotate(self.img, self.spin_degree)
     #     self.spin_degree += self.size * self.spin_side
+
+
 # SETTING GAME MECHANICS
+txt_box = TextBox()
+def new_game():
+    NewGame.player_char(txt_box)
+
+
 def collide(obj1, obj2):
     offset = (int(obj2.x - obj1.x), int(obj2.y - obj1.y))
-    result = obj1.mask.overlap(obj2.mask, offset) != None # WORKING: It returns
-    return result                                         # true if the two objs
-                                                          # overlap
+    result = obj1.mask.overlap(obj2.mask, offset) != None  # WORKING: It returns
+    return result  # true if the two objs
+    # overlap
+
+
 def game():
     running = True
     FPS = 12
@@ -235,9 +279,7 @@ def game():
     bullets_cd = 1
     level = 1
 
-
     laser_lst = []
-
 
     # game subfunctions
     def draw_window():
@@ -254,13 +296,12 @@ def game():
         if ship.dead:
             mixer.music.fadeout(1500)
             lost_label = lost_font.render("You lost", 1, (255, 255, 255))
-            screen.blit(lost_label, (WIDTH/2 - lost_label.get_width()/2, 200))
+            screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
 
         pg.display.update()
 
-
     def new_asteroid():
-        sizes = [0, 1, 2]   # large, medium, small
+        sizes = [0, 1, 2]  # large, medium, small
         size = random.choices(sizes, (20, 60, 20))[0]
         new = Asteroid(size=size)
         asteroids.append(new)
@@ -272,6 +313,10 @@ def game():
             b.spawn_bullet()
 
     def draw_menu_options():
+        #PAGE SETUP
+        game_title_font = pg.font.SysFont('comicsans', 100)
+        game_title_lbl = game_title_font.render('ShipX', 1, (255, 255, 255))
+
         # MENU OPTIONS
         menu_options_font = pg.font.SysFont('comicsans', 50)
 
@@ -280,39 +325,100 @@ def game():
         credits_lbl = menu_options_font.render('Credits', 1, (255, 255, 255))
         quit_game_lbl = menu_options_font.render('Quit Game', 1, (255, 255, 255))
 
-        screen.blit(new_game_lbl, (WIDTH / 2 - new_game_lbl.get_width() / 2, 250))
-        screen.blit(arrow_img, (WIDTH / 2 - new_game_lbl.get_width() + arrow_img.get_width(), 250))
-        screen.blit(records_lbl, (WIDTH / 2 - records_lbl.get_width() / 2, 300))
-        screen.blit(credits_lbl, (WIDTH / 2 - credits_lbl.get_width() / 2, 350))
-        screen.blit(quit_game_lbl, (WIDTH / 2 - quit_game_lbl.get_width() / 2, 400))
 
 
-    def draw_main_menu():
-        game_title_font = pg.font.SysFont('comicsans', 100)
-        game_title_lbl = game_title_font.render('ShipX', 1, (255, 255, 255))
-        screen.blit(bg, (0, 0))
-        screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
+        def new_game_opt():
+            exit('new_game_opt')
+        def records_opt():
+            print('still working on it')
+            exit('records_opt')
+        def credits_opt():
+            print('still working on it')
+            exit('credits_opt')
+        def quit_game_opt():
+            exit('quit_game_opt')
 
-        draw_menu_options()
+        MENU_OPTIONS_DICT = {
+            0: new_game,
+            -4: new_game_opt,
+            -3: records_opt,
+            -2: credits_opt,
+            -1: quit_game_opt
+        }
 
-        pg.display.update()
-        
+
+        def label_pos(label_obj):
+            x_pos = WIDTH/2 - label_obj.get_width()/2
+            y_pos = {
+                new_game_lbl : 250,
+                records_lbl : 300,
+                credits_lbl : 350,
+                quit_game_lbl : 400
+            }
+            return(x_pos, y_pos[label_obj])
+
+        #SCREEN SELECTION ARROW
+        def arrow_pos(label_x, label_y):
+            obj_wid = WIDTH/2 - label_x
+            arrow_x = label_x + obj_wid * 2 + 15
+            arrow_y = label_y - 20
+            return(arrow_x, arrow_y)
+
+        arrow_pos_arr = [
+            arrow_pos(label_pos(new_game_lbl)[0],label_pos(new_game_lbl)[1]),
+            arrow_pos(label_pos(records_lbl)[0], label_pos(records_lbl)[1]),
+                      arrow_pos(label_pos(credits_lbl)[0], label_pos(credits_lbl)[1]),
+                      arrow_pos(label_pos(quit_game_lbl)[0], label_pos(quit_game_lbl)[1])
+        ]
+        arrow_current = 0
+
+
+
+        def label_blit(label_obj):
+            screen.blit(label_obj, (label_pos(label_obj)))
+
+
+        main_menu = True
+        while main_menu:
+
+            screen.blit(bg, (0, 0))
+            screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
+
+            label_blit(new_game_lbl)
+            label_blit(records_lbl)
+            label_blit(credits_lbl)
+            label_blit(quit_game_lbl)
+            screen.blit(arrow_img, (arrow_pos_arr[arrow_current][0], arrow_pos_arr[arrow_current][1]))
+
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    pg.quit()
+                    exit()
+                keys = pg.key.get_pressed()
+                if keys[pg.K_UP] or keys[pg.K_w]:
+                    if arrow_current > -4:
+                        print(f'[W] antes :{arrow_current}')
+                        arrow_current -= 1
+                        print(f'[W] depois :{arrow_current}')
+                    else:
+                        arrow_current = 0
+
+                if keys[pg.K_DOWN] or keys[pg.K_s]:
+                    if arrow_current < 0:
+                        print(f'[S] antes :{arrow_current}')
+                        arrow_current += 1
+                        print(f'[S] depois :{arrow_current}')
+                    else:
+                        arrow_current = -4
+                if keys[pg.K_e] or keys[pg.K_SPACE]:
+                    print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
+                    MENU_OPTIONS_DICT[arrow_current]()
+            pg.display.update()
 
     # subfunctions calls
     ship = Ship(336, 300)
-    main_menu = True
     # main menu
-    while main_menu:
-
-        draw_main_menu()
-
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                running = False
-                main_menu = False
-        keys = pg.key.get_pressed()
-        if keys[pg.K_ESCAPE]:
-            main_menu = False
+    draw_menu_options()
 
     # SOUNDS
     mixer.music.load('sounds/bg_music.mp3')
@@ -369,7 +475,5 @@ def game():
                 FPS = 60
         draw_window()
 
-
-
-
-game()
+if __name__ == '__main__':
+    game()
