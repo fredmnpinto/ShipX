@@ -77,7 +77,10 @@ def player_char(txt_box):
                             feedback_txt = ''
                             confirm_snd.play()
                             time.sleep(0.3)
-                            return # game
+                            # set the input to the players name
+                            main.ship.name = txt_box.text
+
+                            return False
                         if len(txt_box.text) <= 3:
                             feedback_txt = 'Too Short'
                             back_snd.play()

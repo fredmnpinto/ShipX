@@ -183,7 +183,7 @@ class Ship:
         self.cool_down = 0
         self.mask = pg.mask.from_surface(self.ship_img)
         self.max_hp = 100
-        self.vel = 1
+        self.vel = 5
         self.dead = False
         self.shooting_count = 0
         self.name = ''
@@ -270,10 +270,14 @@ def collide(obj1, obj2):
     return result  # true if the two objs
     # overlap
 
+# GLOBALS
+main_menu = True
+ship = Ship()
+
 
 def game():
     running = True
-    FPS = 12
+    FPS = 60
     clock = pg.time.Clock()
     score = 0
     lives = 5
@@ -382,8 +386,6 @@ def game():
 
         def label_blit(label_obj):
             screen.blit(label_obj, (label_pos(label_obj)))
-
-
         main_menu = True
         while main_menu:
 
@@ -423,15 +425,13 @@ def game():
                     print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
                     bong_snd.play()
                     time.sleep(0.3)
-                    MENU_OPTIONS_DICT[arrow_current]()
-
+                    main_menu = MENU_OPTIONS_DICT[arrow_current]()
+                    print(main_menu)
             pg.display.update()
 
-    # subfunctions calls
-    ship = Ship()
     # main menu
     draw_menu_options()
-
+    print(main_menu)
     # SOUNDS
     mixer.music.load('sounds/bg_music.mp3')
     mixer.music.play(-1)
