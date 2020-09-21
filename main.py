@@ -2,15 +2,24 @@
 import json
 import random
 from pprint import pprint
-import new_game_txt_box as NewGame
+import new_game_screen as NewGame
 import pygame as pg
 from pygame import mixer
+import time
 
 pg.init()
 pg.font.init()
 
 # SETTING WINDOW
 WIDTH, HEIGHT = 800, 600
+
+# SOUNDS
+bullet_sound = mixer.Sound('sounds/small_laser.wav')
+bullet_sound.set_volume(0.02)
+close_snd = mixer.Sound('sounds/close.ogg')
+click_snd = mixer.Sound('sounds/click.ogg')
+bong_snd = mixer.Sound('sounds/bong.ogg')
+
 
 # IMAGE SETTING:
 icon = pg.image.load('img/spaceship.png')
@@ -20,9 +29,6 @@ ship = pg.image.load('img/spaceship.png')
 ship = pg.transform.scale(ship, (64, 64))
 bullet = pg.image.load('img/bullet.png')
 bullet = pg.transform.scale(bullet, (32, 32))
-
-bullet_sound = mixer.Sound('sounds/small_laser.wav')
-bullet_sound.set_volume(0.02)
 
 # asteroins
 small_astoroid = pg.image.load('img/asteroid(2).png')
@@ -340,7 +346,7 @@ def game():
 
         MENU_OPTIONS_DICT = {
             0: new_game,
-            -4: new_game_opt,
+            -4: new_game,
             -3: records_opt,
             -2: credits_opt,
             -1: quit_game_opt
@@ -381,7 +387,7 @@ def game():
         main_menu = True
         while main_menu:
 
-            screen.blit(bg, (0, 0))
+            screen.fill((30, 30, 30))
             screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
 
             label_blit(new_game_lbl)
@@ -402,17 +408,23 @@ def game():
                         print(f'[W] depois :{arrow_current}')
                     else:
                         arrow_current = 0
-
+                    click_snd.play()
+                    time.sleep(0.2)
                 if keys[pg.K_DOWN] or keys[pg.K_s]:
                     if arrow_current < 0:
                         print(f'[S] antes :{arrow_current}')
                         arrow_current += 1
                         print(f'[S] depois :{arrow_current}')
                     else:
-                        arrow_current = -4
-                if keys[pg.K_e] or keys[pg.K_SPACE]:
+                        arrow_current = -3
+                    click_snd.play()
+                    time.sleep(0.2)
+                if keys[pg.K_e] or keys[pg.K_RETURN]:
                     print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
+                    bong_snd.play()
+                    time.sleep(0.3)
                     MENU_OPTIONS_DICT[arrow_current]()
+
             pg.display.update()
 
     # subfunctions calls
