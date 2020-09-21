@@ -175,18 +175,18 @@ class BigLaser(Bullet):  # TODO: ANIMATION NOT WORKING
 
 
 class Ship:
-    def __init__(self, x, y, hp=100):
-        self.x = x
-        self.y = y
-        self.hp = hp
+    def __init__(self):
+        self.x, self.y = 336, 300
+        self.hp = 100
         self.ship_img = ship
         self.bullets = []
         self.cool_down = 0
         self.mask = pg.mask.from_surface(self.ship_img)
-        self.max_hp = hp
+        self.max_hp = 100
         self.vel = 1
         self.dead = False
         self.shooting_count = 0
+        self.name = ''
 
     def shoot(self):
         self.shooting_count += 1
@@ -428,7 +428,7 @@ def game():
             pg.display.update()
 
     # subfunctions calls
-    ship = Ship(336, 300)
+    ship = Ship()
     # main menu
     draw_menu_options()
 
