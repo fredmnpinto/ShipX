@@ -14,6 +14,7 @@ FPS = 60
 clock = pg.time.Clock()
 
 mixer.init()
+
 if mixer.get_init():
     back_snd = mixer.Sound('sounds/back.ogg')
     confirm_snd = mixer.Sound('sounds/confirmation.ogg')
@@ -23,9 +24,10 @@ if mixer.get_init():
 
 def player_char(txt_box):
     done = False
-    font = pg.font.SysFont('comicsans', 25)
+    title_font = pg.font.Font('font/notalot35.ttf', 50)
+    font = title_font
     esc_lbl = font.render('press -ESC- to go back', 1, (255, 255, 255))
-    username_lbl = pg.font.SysFont('comicsans', 40).render('Enter your username:', 1, (255, 255, 255))
+    username_lbl = title_font.render('Enter your username:', 1, (255, 255, 255))
     rec_box = pg.Rect(100, 200, WIDTH - 200, HEIGHT - 250)
     feedback_txt = ''
     data = []
@@ -54,8 +56,6 @@ def player_char(txt_box):
                 if event.key == pg.K_ESCAPE:
                     back_snd.play()
                     time.sleep(0.2)
-
-                    done = True
                     return
 
                 if txt_box.active:
@@ -74,7 +74,6 @@ def player_char(txt_box):
                             else:
                                 feedback_txt = ''
                         if not already_exists and len(txt_box.text) > 3:
-                            feedback_txt = ''
                             confirm_snd.play()
                             time.sleep(0.3)
                             # set the input to the players name
@@ -107,6 +106,7 @@ def player_char(txt_box):
             screen.blit(plr_name_lbl, (scoreboard_x, scoreboard_y))
             screen.blit(plr_score_lbl, (WIDTH - scoreboard_x - plr_score_lbl.get_width(), scoreboard_y))
             scoreboard_y += plr_score_lbl.get_height() + 10
+
         pg.display.update()
 
 

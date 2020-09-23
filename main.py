@@ -6,6 +6,7 @@ import new_game_screen as NewGame
 import pygame as pg
 from pygame import mixer
 import time
+from render_func import render
 
 pg.init()
 pg.font.init()
@@ -26,9 +27,16 @@ icon = pg.image.load('img/spaceship.png')
 
 # spaceship
 ship = pg.image.load('img/spaceship.png')
-ship = pg.transform.scale(ship, (64, 64))
-bullet = pg.image.load('img/bullet.png')
-bullet = pg.transform.scale(bullet, (32, 32))
+ship_img = pg.transform.scale(ship, (64, 64))
+
+bullet_img = pg.image.load('img/bullet.png')
+bullet_img = pg.transform.scale(bullet_img, (32, 32))
+big_laser_arr = [pg.image.load('img/n_laser/sprite_0.png'),
+                 pg.image.load('img/n_laser/sprite_1.png'),
+                 pg.image.load('img/n_laser/sprite_2.png'),
+                 pg.image.load('img/n_laser/sprite_3.png'),
+                 pg.image.load('img/n_laser/sprite_4.png'),
+                 pg.image.load('img/n_laser/sprite_5.png')]
 
 # asteroins
 small_astoroid = pg.image.load('img/asteroid(2).png')
@@ -39,8 +47,7 @@ large_astoroid = pg.image.load('img/asteroid(0).png')
 large_astoroid = pg.transform.scale(large_astoroid, (128, 128))
 
 # background
-bg = pg.image.load('img/background.png')
-bg = pg.transform.scale(bg, (WIDTH, HEIGHT))
+
 
 # main menu
 arrow_img = pg.image.load('img/arrow.png')
@@ -52,6 +59,35 @@ pg.display.set_caption("ShipX")
 
 
 # CLASSES
+class MainMenu:
+    sprites =[
+    pg.image.load('img/main_menu/Frame001.png'),
+    pg.image.load('img/main_menu/Frame002.png'),
+    pg.image.load('img/main_menu/Frame003.png'),
+    pg.image.load('img/main_menu/Frame004.png'),
+    pg.image.load('img/main_menu/Frame005.png'),
+    pg.image.load('img/main_menu/Frame006.png'),
+    pg.image.load('img/main_menu/Frame007.png')
+]
+    def __init__(self):
+        self.img = self.sprites[0]
+        self.count = 0
+        self.sub_count = 0
+    def update_img(self):
+        self.img = self.sprites[self.count]
+    def up_count(self):
+        self.sub_count += 1
+        if self.sub_count >= 8:
+            if self.count < 6:
+                self.count += 1
+            else:
+                self.count = 0
+            self.sub_count = 0
+        self.update_img()
+    def draw_menu_bg(self):
+        self.up_count()
+        screen.blit(self.img, (0, 0))
+
 class TextBox():
     font = pg.font.Font(None, 32)
     colors_dict = {
@@ -85,49 +121,15 @@ class TextBox():
         screen.blit(self.surface, (self.x + 1, self.y + 5))
         pg.draw.rect(screen, self.color, self.rect, 2)
 
-class Spritesheet():
-    def __init__(self, obj):
-        json_path = f'img/{obj}/{obj}.json'
-        try:
-            img_path = f'img/{obj}/{obj}.png'
-        except:
-            img_path = f'img/{obj}/{obj}.jpg'
-        self.spritesheet = pg.image.load(img_path)
-        self.json_file = json_path
-        self.SPRITES = None
-        self.frames = []
-        self.read_json()
-
-    def read_json(self):
-        with open(self.json_file, 'r') as data:
-            self.SPRITES = json.load(data)
-            print('Printing json data as:')
-            pprint(self.SPRITES)
-            for i in self.SPRITES['frames']:
-                print(i)
-                frame_values = []
-
-                for x in self.SPRITES['frames'][i]['frame'].values():
-                    print(x)
-                    frame_values.append(x)
-
-                self.frames.append(self.get_image(frame_values[0], frame_values[1], frame_values[2], frame_values[3]))
-                frame_values.clear()
-            pprint(self.frames)
-
-    def get_image(self, x, y, width, height):
-        image = pg.Surface((width, height))
-        image.blit(self.spritesheet, (0, 0), (x, y, width, height))
-        return image  # TODO: Change the bullet sprites to these OR: Make new type of bullet
-
 
 class Bullet:
     def __init__(self, x, y):
         self.x = x
         self.y = y
         self.vel = 15
-        self.img = bullet
+        self.img = bullet_img
         self.mask = pg.mask.from_surface(self.img)
+        self.dmg = 1
 
     def spawn_bullet(self):
         screen.blit(self.img, (self.x, self.y))
@@ -156,19 +158,22 @@ class BigLaser(Bullet):  # TODO: ANIMATION NOT WORKING
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.sprites = Spritesheet('laser')
-        self.img = self.sprites.frames[0]
-        self.vel = 10
+        self.sprites = big_laser_arr
+        self.img = self.sprites[0]
+        self.vel = 6
         self.sprite_count = 0
+        self.sub_count = 0
         self.mask = pg.mask.from_surface(self.img)
+        self.dmg = 5
 
     def spawn_laser(self):
         screen.blit(self.img, (self.x, self.y))
-        if self.sprite_count < 4:
-            self.sprite_count += 1
+        if self.sub_count <= 5:
+            self.sub_count += 1
         else:
-            self.sprite_count = 0
-        self.img = self.sprites.frames[self.sprite_count]
+            self.sprite_count += 1
+            self.sub_count = 0
+            self.img = self.sprites[self.sprite_count]
 
     def move_laser(self):
         self.y -= self.vel
@@ -178,7 +183,10 @@ class Ship:
     def __init__(self):
         self.x, self.y = 336, 300
         self.hp = 100
-        self.ship_img = ship
+        # self.sprite_count = 0
+        # self.sub_count = 0
+        # self.ship_img = ship_arr[self.sprite_count]
+        self.ship_img = ship_img
         self.bullets = []
         self.cool_down = 0
         self.mask = pg.mask.from_surface(self.ship_img)
@@ -187,10 +195,9 @@ class Ship:
         self.dead = False
         self.shooting_count = 0
         self.name = ''
-
     def shoot(self):
         self.shooting_count += 1
-        if self.shooting_count >= 3:
+        if self.shooting_count >= 5:
             b = BigLaser(self.x, self.y)
             self.shooting_count = 0
         else:
@@ -204,6 +211,14 @@ class Ship:
         bullet_sound.play()
 
     def draw(self, screen):
+        # self.sub_count += 1
+        # if self.sub_count == 8:
+        #     self.ship_img = ship_arr[self.sprite_count]
+        #     self.sub_count = 0
+        #     if self.sprite_count < 3:
+        #         self.sprite_count += 1
+        #     else:
+        #         self.sprite_count = 0
         screen.blit(self.ship_img, (self.x, self.y))
 
     def get_width(self):
@@ -223,7 +238,7 @@ class Ship:
             else:
                 for obj in objs:
                     if b.collision(obj):
-                        obj.health -= 1
+                        obj.health -= b.dmg
                         try:
                             self.bullets.remove(
                                 b)  # find and fix this error self.bullets.remove(x) -- x not in list [erro que ocorreu mas nao houve repeticao]
@@ -274,6 +289,7 @@ def collide(obj1, obj2):
 main_menu = True
 ship = Ship()
 
+lvl_passing_time_active_g = 0
 
 def game():
     running = True
@@ -281,22 +297,56 @@ def game():
     clock = pg.time.Clock()
     score = 0
     lives = 5
-    font = pg.font.SysFont("comicsans", 50)
-    lost_font = pg.font.SysFont("comicsans", 70)
 
     asteroids = []
     asteroid_cd = 40
-    bullets_cd = 1
-    level = 1
+    bullets_cd = 20
+
+
 
     laser_lst = []
 
+    # defining labels
+    font = pg.font.Font('font/notalot35.ttf', 50)
+    lost_font = pg.font.SysFont("comicsans", 70)
+
+    hp_lbl = font.render(f"Lives: {lives}", 1, (255, 255, 255))
+    scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
+    game_title_font = pg.font.Font('font/notalot35.ttf', 150)
+
+
+
+        # --MENU OPTIONS--
+    menu_options_font = font
+
+    FONT_COLOR = (255, 255, 255)
+    OUTLINE_COLOR = (0, 0, 0)
+    game_title_lbl = render('ShipX', game_title_font, FONT_COLOR, OUTLINE_COLOR)
+    # new_game_lbl = menu_options_font.render('New Game', 1, GREEN)
+    new_game_lbl = render('New Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
+    records_lbl = render('Records', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
+    credits_lbl = render('Credits',menu_options_font, FONT_COLOR, OUTLINE_COLOR)
+    quit_game_lbl = render('Quit Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
+
     # game subfunctions
     def draw_window():
-        screen.fill((255, 255, 255))
-        screen.blit(bg, (0, 0))
+        screen.fill((30, 30, 30))
+
         hp_lbl = font.render(f"Lives: {lives}", 1, (255, 255, 255))
         scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
+
+        level = score % 250
+        lvl_passing_time_active = lvl_passing_time_active_g
+
+        if score == 250:
+            level = 2
+            lvl_passing_time_active += 120
+
+        if lvl_passing_time_active > 0:
+            lvl_passing_lbl = game_title_font.render(f'Level {level}', 1, (255, 255, 255))
+            screen.blit(lvl_passing_lbl, (WIDTH/2 - lvl_passing_lbl.get_width()/2, HEIGHT/2 - lvl_passing_lbl.get_height()))
+            lvl_passing_time_active -= 1
+
 
         spawn_nonplayers()
         ship.draw(screen)
@@ -305,7 +355,7 @@ def game():
 
         if ship.dead:
             mixer.music.fadeout(1500)
-            lost_label = lost_font.render("You lost", 1, (255, 255, 255))
+            lost_label = render("You lost", game_title_font, (FONT_COLOR), (OUTLINE_COLOR))
             screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
 
         pg.display.update()
@@ -323,19 +373,6 @@ def game():
             b.spawn_bullet()
 
     def draw_menu_options():
-        #PAGE SETUP
-        game_title_font = pg.font.SysFont('comicsans', 100)
-        game_title_lbl = game_title_font.render('ShipX', 1, (255, 255, 255))
-
-        # MENU OPTIONS
-        menu_options_font = pg.font.SysFont('comicsans', 50)
-
-        new_game_lbl = menu_options_font.render('New Game', 1, (255, 255, 255))
-        records_lbl = menu_options_font.render('Records', 1, (255, 255, 255))
-        credits_lbl = menu_options_font.render('Credits', 1, (255, 255, 255))
-        quit_game_lbl = menu_options_font.render('Quit Game', 1, (255, 255, 255))
-
-
 
         def new_game_opt():
             exit('new_game_opt')
@@ -387,10 +424,17 @@ def game():
         def label_blit(label_obj):
             screen.blit(label_obj, (label_pos(label_obj)))
         main_menu = True
+
+        main_menu_ani_count = 0
+        menu_sub_count = 0
+
+        main_menu_obj = MainMenu()
+
         while main_menu:
 
-            screen.fill((30, 30, 30))
-            screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
+
+            main_menu_obj.draw_menu_bg()
+            # screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
 
             label_blit(new_game_lbl)
             label_blit(records_lbl)
@@ -402,7 +446,9 @@ def game():
                 if event.type == pg.QUIT:
                     pg.quit()
                     exit()
+
                 keys = pg.key.get_pressed()
+
                 if keys[pg.K_UP] or keys[pg.K_w]:
                     if arrow_current > -4:
                         print(f'[W] antes :{arrow_current}')
@@ -412,6 +458,7 @@ def game():
                         arrow_current = 0
                     click_snd.play()
                     time.sleep(0.2)
+
                 if keys[pg.K_DOWN] or keys[pg.K_s]:
                     if arrow_current < 0:
                         print(f'[S] antes :{arrow_current}')
@@ -421,12 +468,18 @@ def game():
                         arrow_current = -3
                     click_snd.play()
                     time.sleep(0.2)
+
                 if keys[pg.K_e] or keys[pg.K_RETURN]:
                     print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
                     bong_snd.play()
                     time.sleep(0.3)
                     main_menu = MENU_OPTIONS_DICT[arrow_current]()
                     print(main_menu)
+
+                if keys[pg.K_F1]:
+                    print('-DEBUG MODE-')
+                    main_menu = False
+            screen.blit(game_title_lbl, (WIDTH/2 - game_title_lbl.get_width()/2, 100))
             pg.display.update()
 
     # main menu
@@ -437,8 +490,10 @@ def game():
     mixer.music.play(-1)
     mixer.music.set_volume(0.3)
 
+
     # gameloop
     while running:
+
         if ship.dead:
 
             if FPS >= 15:
@@ -486,6 +541,7 @@ def game():
             if keys[pg.K_o]:
                 FPS = 60
         draw_window()
+
 
 if __name__ == '__main__':
     game()
