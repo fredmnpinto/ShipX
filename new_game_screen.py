@@ -56,7 +56,7 @@ def player_char(txt_box):
                 if event.key == pg.K_ESCAPE:
                     back_snd.play()
                     time.sleep(0.2)
-                    return
+                    return True, 'NO_NAME_ERROR'
 
                 if txt_box.active:
                     if event.key == pg.K_RETURN:
@@ -79,7 +79,8 @@ def player_char(txt_box):
                             # set the input to the players name
                             main.ship.name = txt_box.text
 
-                            return False
+                            return False, txt_box.text
+
                         if len(txt_box.text) <= 3:
                             feedback_txt = 'Too Short'
                             back_snd.play()

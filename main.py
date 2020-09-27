@@ -7,13 +7,17 @@ import pygame as pg
 from pygame import mixer
 import time
 from render_func import render
+import math
+import csv
+
 
 pg.init()
 pg.font.init()
 
 # SETTING WINDOW
 WIDTH, HEIGHT = 800, 600
-
+FONT_COLOR = (255, 255, 255)
+OUTLINE_COLOR = (0, 0, 0)
 # SOUNDS
 bullet_sound = mixer.Sound('sounds/small_laser.wav')
 bullet_sound.set_volume(0.02)
@@ -28,6 +32,7 @@ icon = pg.image.load('img/spaceship.png')
 # spaceship
 ship = pg.image.load('img/spaceship.png')
 ship_img = pg.transform.scale(ship, (64, 64))
+ship_img = pg.transform.rotate(ship_img, 270)
 
 bullet_img = pg.image.load('img/bullet.png')
 bullet_img = pg.transform.scale(bullet_img, (32, 32))
@@ -47,16 +52,19 @@ large_astoroid = pg.image.load('img/asteroid(0).png')
 large_astoroid = pg.transform.scale(large_astoroid, (128, 128))
 
 # background
+in_game_bg = pg.image.load('img/background.png')
 
 
 # main menu
-arrow_img = pg.image.load('img/arrow.png')
-arrow_img = pg.transform.scale(arrow_img, (64, 64))
+# arrow_img = pg.image.load('img/arrow.png')
+# arrow_img = pg.transform.scale(arrow_img, (64, 64))
+arrow_img = pg.transform.rotate(ship_img, 90)
 
 pg.display.set_icon(icon)
 screen = pg.display.set_mode((WIDTH, HEIGHT))
 pg.display.set_caption("ShipX")
 
+comet_img = pg.image.load('img/comet.png')
 
 # CLASSES
 class MainMenu:
@@ -69,6 +77,7 @@ class MainMenu:
     pg.image.load('img/main_menu/Frame006.png'),
     pg.image.load('img/main_menu/Frame007.png')
 ]
+
     def __init__(self):
         self.img = self.sprites[0]
         self.count = 0
@@ -154,7 +163,7 @@ class Bullet:
             return True
 
 
-class BigLaser(Bullet):  # TODO: ANIMATION NOT WORKING
+class BigLaser(Bullet):
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -271,12 +280,31 @@ class Asteroid:
     # def rotate(self):
     #     self.img = pg.transform.rotate(self.img, self.spin_degree)
     #     self.spin_degree += self.size * self.spin_side
+class Comet():
+    def __init__(self):
+        self.x = HEIGHT
+        self.y = WIDTH
+        self.angle = math.pi/6 # 30 degrees
+        self.img = pg.transform.rotate(comet_img, self.angle * 180/math.pi)
+        self.sin = math.sin(self.angle)
+        self.cos = math.cos(self.angle)
 
+    def move_comet(self):
+        self.y += self.sin
+        self.x -= self.cos
+        if self.off_screen():
+            del self
+
+    def off_screen(self):
+        return self.x < 0 or self.y > HEIGHT + self.img.get_height()
+
+    def spawn_comet(self):
+        screen.blit(self.img, (self.x, self.y))
 
 # SETTING GAME MECHANICS
-txt_box = TextBox()
+txt_box = TextBox(y= 120)
 def new_game():
-    NewGame.player_char(txt_box)
+    return NewGame.player_char(txt_box)
 
 
 def collide(obj1, obj2):
@@ -290,6 +318,64 @@ main_menu = True
 ship = Ship()
 
 lvl_passing_time_active_g = 0
+comet_arr = []
+
+def save_progress(score = 0):
+    with open('records.csv') as fr:  # working
+        data = csv.DictReader(fr)
+        data_copy = {}
+        for row in data:
+            data_copy[row['username']] = row['highest_score']
+
+        pprint(data_copy)
+
+        data_copy[ship.name] = score
+
+        pprint(data_copy)
+
+        with open('records.csv', 'w', newline='') as fw:  # working
+            fieldnames = ['username', 'highest_score']
+            writer = csv.writer(fw)
+            writer.writerow(fieldnames)
+            for key, value in data_copy.items():
+                writer.writerow([key, value])
+
+main_menu_obj = MainMenu()
+
+
+
+def credits():
+    credits_arr = [
+        'General Fullstack Director:        Frederico Pinto',
+        'Co-Creative Director:      Joao Pedro Ferronato',
+        'Images:        Frederico Pinto together with flaticon',
+        'SFX:       kenney.nl/assets'
+    ]
+    credits_font = pg.font.Font('font/notalot35.ttf', 30)
+    credits_title_font = pg.font.Font('font/notalot35.ttf', 100)
+    credits_title_lbl = render('Credits', credits_title_font, FONT_COLOR, OUTLINE_COLOR)
+    esc_font = pg.font.Font('font/notalot35.ttf', 50)
+    esc_lbl = esc_font.render('press -ESC- to go back', 1, FONT_COLOR)
+
+    credits_on_screen = True
+
+    while credits_on_screen:
+        main_menu_obj.draw_menu_bg()
+        credits_pos = 250
+        screen.blit(credits_title_lbl, (WIDTH/2 - credits_title_lbl.get_width()/2, 100))
+        screen.blit(esc_lbl, (HEIGHT - esc_lbl.get_height() - 5, WIDTH - esc_lbl.get_width() - 5))
+        for txt in credits_arr:
+            new_lbl = render(txt, credits_font, FONT_COLOR, OUTLINE_COLOR)
+            screen.blit(new_lbl, (WIDTH/2 - new_lbl.get_width()/2, credits_pos))
+            credits_pos += 50
+        for event in pg.event.get():
+            keys = pg.key.get_pressed()
+            if event.type == pg.QUIT:
+                exit('credits_quit')
+            if keys[pg.K_ESCAPE]:
+                credits_on_screen = False
+        pg.display.update()
+    return True, 'NO_NAME_YET'
 
 def game():
     running = True
@@ -297,6 +383,8 @@ def game():
     clock = pg.time.Clock()
     score = 0
     lives = 5
+
+
 
     asteroids = []
     asteroid_cd = 40
@@ -319,8 +407,7 @@ def game():
         # --MENU OPTIONS--
     menu_options_font = font
 
-    FONT_COLOR = (255, 255, 255)
-    OUTLINE_COLOR = (0, 0, 0)
+
     game_title_lbl = render('ShipX', game_title_font, FONT_COLOR, OUTLINE_COLOR)
     # new_game_lbl = menu_options_font.render('New Game', 1, GREEN)
     new_game_lbl = render('New Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
@@ -329,8 +416,12 @@ def game():
     quit_game_lbl = render('Quit Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
 
     # game subfunctions
+    def records_window(): # TODO finish records_window
+        pass
+
+
     def draw_window():
-        screen.fill((30, 30, 30))
+        screen.blit(in_game_bg, (0,0)) # TODO in-game bg screen
 
         hp_lbl = font.render(f"Lives: {lives}", 1, (255, 255, 255))
         scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
@@ -354,9 +445,7 @@ def game():
         screen.blit(scr_lbl, (WIDTH - scr_lbl.get_width(), 10))
 
         if ship.dead:
-            mixer.music.fadeout(1500)
-            lost_label = render("You lost", game_title_font, (FONT_COLOR), (OUTLINE_COLOR))
-            screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
+            player_death(score)
 
         pg.display.update()
 
@@ -374,22 +463,22 @@ def game():
 
     def draw_menu_options():
 
-        def new_game_opt():
+        def new_game_opt(): # done
             exit('new_game_opt')
         def records_opt():
             print('still working on it')
             exit('records_opt')
-        def credits_opt():
+        def credits_opt(): # done
             print('still working on it')
             exit('credits_opt')
-        def quit_game_opt():
+        def quit_game_opt(): # done
             exit('quit_game_opt')
 
         MENU_OPTIONS_DICT = {
             0: new_game,
             -4: new_game,
             -3: records_opt,
-            -2: credits_opt,
+            -2: credits,
             -1: quit_game_opt
         }
 
@@ -408,7 +497,7 @@ def game():
         def arrow_pos(label_x, label_y):
             obj_wid = WIDTH/2 - label_x
             arrow_x = label_x + obj_wid * 2 + 15
-            arrow_y = label_y - 20
+            arrow_y = label_y - 10
             return(arrow_x, arrow_y)
 
         arrow_pos_arr = [
@@ -428,10 +517,23 @@ def game():
         main_menu_ani_count = 0
         menu_sub_count = 0
 
-        main_menu_obj = MainMenu()
+
+
+        comet_cd = 0
 
         while main_menu:
 
+            if comet_cd <= 60:
+                comet_cd += 1
+            else:
+                new_comet = Comet()
+                comet_arr.append(new_comet)
+                comet_cd = 0
+
+            # for comet in comet_arr:
+            #     comet.move_comet()
+            #     comet.spawn_comet()
+            #     print(comet) TODO CONSERTAR ESSA MERDA
 
             main_menu_obj.draw_menu_bg()
             # screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 120))
@@ -441,6 +543,8 @@ def game():
             label_blit(credits_lbl)
             label_blit(quit_game_lbl)
             screen.blit(arrow_img, (arrow_pos_arr[arrow_current][0], arrow_pos_arr[arrow_current][1]))
+
+
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -473,7 +577,8 @@ def game():
                     print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
                     bong_snd.play()
                     time.sleep(0.3)
-                    main_menu = MENU_OPTIONS_DICT[arrow_current]()
+                    main_menu, ship.name = MENU_OPTIONS_DICT[arrow_current]()
+                    print(ship.name)
                     print(main_menu)
 
                 if keys[pg.K_F1]:
@@ -481,6 +586,8 @@ def game():
                     main_menu = False
             screen.blit(game_title_lbl, (WIDTH/2 - game_title_lbl.get_width()/2, 100))
             pg.display.update()
+
+
 
     # main menu
     draw_menu_options()
@@ -542,6 +649,17 @@ def game():
                 FPS = 60
         draw_window()
 
+first_time = True  # complement variable to player_death() to only be played once
+
+def player_death(score):
+    mixer.music.fadeout(1500)
+    game_title_font = pg.font.Font('font/notalot35.ttf', 150)
+    lost_label = render("You lost", game_title_font, (FONT_COLOR), (OUTLINE_COLOR))
+    screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
+    global first_time
+    if first_time: # working
+        first_time = False
+        save_progress(score)
 
 if __name__ == '__main__':
     game()
