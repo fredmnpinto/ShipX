@@ -1,5 +1,4 @@
 # testing game running protocols:
-import json
 import random
 from pprint import pprint
 import new_game_screen as NewGame
@@ -24,7 +23,6 @@ bullet_sound.set_volume(0.02)
 close_snd = mixer.Sound('sounds/close.ogg')
 click_snd = mixer.Sound('sounds/click.ogg')
 bong_snd = mixer.Sound('sounds/bong.ogg')
-
 
 # IMAGE SETTING:
 icon = pg.image.load('img/spaceship.png')
@@ -54,7 +52,6 @@ large_astoroid = pg.transform.scale(large_astoroid, (128, 128))
 # background
 in_game_bg = pg.image.load('img/background.png')
 
-
 # main menu
 # arrow_img = pg.image.load('img/arrow.png')
 # arrow_img = pg.transform.scale(arrow_img, (64, 64))
@@ -66,24 +63,27 @@ pg.display.set_caption("ShipX")
 
 comet_img = pg.image.load('img/comet.png')
 
+
 # CLASSES
 class MainMenu:
-    sprites =[
-    pg.image.load('img/main_menu/Frame001.png'),
-    pg.image.load('img/main_menu/Frame002.png'),
-    pg.image.load('img/main_menu/Frame003.png'),
-    pg.image.load('img/main_menu/Frame004.png'),
-    pg.image.load('img/main_menu/Frame005.png'),
-    pg.image.load('img/main_menu/Frame006.png'),
-    pg.image.load('img/main_menu/Frame007.png')
-]
+    sprites = [
+        pg.image.load('img/main_menu/Frame001.png'),
+        pg.image.load('img/main_menu/Frame002.png'),
+        pg.image.load('img/main_menu/Frame003.png'),
+        pg.image.load('img/main_menu/Frame004.png'),
+        pg.image.load('img/main_menu/Frame005.png'),
+        pg.image.load('img/main_menu/Frame006.png'),
+        pg.image.load('img/main_menu/Frame007.png')
+    ]
 
     def __init__(self):
         self.img = self.sprites[0]
         self.count = 0
         self.sub_count = 0
+
     def update_img(self):
         self.img = self.sprites[self.count]
+
     def up_count(self):
         self.sub_count += 1
         if self.sub_count >= 8:
@@ -93,18 +93,20 @@ class MainMenu:
                 self.count = 0
             self.sub_count = 0
         self.update_img()
+
     def draw_menu_bg(self):
         self.up_count()
         screen.blit(self.img, (0, 0))
 
-class TextBox():
+
+class TextBox:
     font = pg.font.Font(None, 32)
     colors_dict = {
         'active': pg.Color('dodgerblue2'),
         'inactive': pg.Color('lightskyblue3')
     }
 
-    def __init__(self, x = WIDTH/2 - 70, y = 100, w = 140, h = 32):
+    def __init__(self, x=WIDTH / 2 - 70, y=100, w=140, h=32):
         self.x = x
         self.y = y
         self.w = w
@@ -156,7 +158,7 @@ class Bullet:
         return collide(self, obj)
 
     def off_screen(self):
-        if self.y <= HEIGHT and self.y >= 0:
+        if HEIGHT >= self.y >= 0:
             return False
         else:
             print(f'bullet {self} went offscreen')
@@ -165,6 +167,7 @@ class Bullet:
 
 class BigLaser(Bullet):
     def __init__(self, x, y):
+        super().__init__(x, y)
         self.x = x
         self.y = y
         self.sprites = big_laser_arr
@@ -204,6 +207,7 @@ class Ship:
         self.dead = False
         self.shooting_count = 0
         self.name = ''
+
     def shoot(self):
         self.shooting_count += 1
         if self.shooting_count >= 5:
@@ -256,9 +260,11 @@ class Ship:
                         print('bullet collided')
                         print(f'asteroid {obj}\nsupposedly took 1 damage and has {obj.health} hp')
 
+
 class BrowserLink():
     font = pg.font.Font('font/notalot35.ttf', 30)
-    def __init__(self, url = 'https://github.com/fredmnpinto/ShipX'):
+
+    def __init__(self, url='https://github.com/fredmnpinto/ShipX'):
         self.url = url
         self.label = render(self.url, self.font, FONT_COLOR, OUTLINE_COLOR)
         self.x = 5
@@ -273,6 +279,7 @@ class BrowserLink():
 
     def clicked(self):
         webbrowser.open(self.url)
+
 
 class Asteroid:
     ASTEROID_DIC = {
@@ -297,12 +304,14 @@ class Asteroid:
     # def rotate(self):
     #     self.img = pg.transform.rotate(self.img, self.spin_degree)
     #     self.spin_degree += self.size * self.spin_side
+
+
 class Comet():
     def __init__(self):
         self.x = HEIGHT
         self.y = WIDTH
-        self.angle = math.pi/6 # 30 degrees
-        self.img = pg.transform.rotate(comet_img, self.angle * 180/math.pi)
+        self.angle = math.pi / 6  # 30 degrees
+        self.img = pg.transform.rotate(comet_img, self.angle * 180 / math.pi)
         self.sin = math.sin(self.angle)
         self.cos = math.cos(self.angle)
 
@@ -318,8 +327,11 @@ class Comet():
     def spawn_comet(self):
         screen.blit(self.img, (self.x, self.y))
 
+
 # SETTING GAME MECHANICS
-txt_box = TextBox(y= 120)
+txt_box = TextBox(y=120)
+
+
 def new_game():
     return NewGame.player_char(txt_box)
 
@@ -330,6 +342,7 @@ def collide(obj1, obj2):
     return result  # true if the two objs
     # overlap
 
+
 # GLOBALS
 main_menu = True
 ship = Ship()
@@ -337,7 +350,8 @@ ship = Ship()
 lvl_passing_time_active_g = 0
 comet_arr = []
 
-def save_progress(score = 0):
+
+def save_progress(score=0):
     with open('records.csv') as fr:  # working
         data = csv.DictReader(fr)
         data_copy = {}
@@ -355,8 +369,8 @@ def save_progress(score = 0):
             for key, value in data_copy.items():
                 writer.writerow([key, value])
 
-main_menu_obj = MainMenu()
 
+main_menu_obj = MainMenu()
 
 
 def credits():
@@ -379,11 +393,11 @@ def credits():
         main_menu_obj.draw_menu_bg()
         github_obj.draw()
         credits_pos = 250
-        screen.blit(credits_title_lbl, (WIDTH/2 - credits_title_lbl.get_width()/2, 100))
+        screen.blit(credits_title_lbl, (WIDTH / 2 - credits_title_lbl.get_width() / 2, 100))
         screen.blit(esc_lbl, (WIDTH - esc_lbl.get_width() - 5, HEIGHT - esc_lbl.get_height() - 5))
         for txt in credits_arr:
             new_lbl = render(txt, credits_font, FONT_COLOR, OUTLINE_COLOR)
-            screen.blit(new_lbl, (WIDTH/2 - new_lbl.get_width()/2, credits_pos))
+            screen.blit(new_lbl, (WIDTH / 2 - new_lbl.get_width() / 2, credits_pos))
             credits_pos += 50
         for event in pg.event.get():
             keys = pg.key.get_pressed()
@@ -400,8 +414,10 @@ def credits():
         pg.display.update()
     return True, 'NO_NAME_YET'
 
+
 level = 1
 lvl_passing_time_active = 120
+
 
 def game():
     running = True
@@ -409,7 +425,6 @@ def game():
     clock = pg.time.Clock()
     score = 0
     lives = 5
-
 
     asteroids = []
     asteroid_cd = 40
@@ -425,30 +440,26 @@ def game():
     scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
     game_title_font = pg.font.Font('font/notalot35.ttf', 150)
 
-
-
-        # --MENU OPTIONS--
+    # --MENU OPTIONS--
     menu_options_font = font
     link_font = pg.font.Font('font/notalot35.ttf', 30)
-
 
     game_title_lbl = render('ShipX', game_title_font, FONT_COLOR, OUTLINE_COLOR)
     # new_game_lbl = menu_options_font.render('New Game', 1, GREEN)
     new_game_lbl = render('New Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
     records_lbl = render('Records', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
-    credits_lbl = render('Credits',menu_options_font, FONT_COLOR, OUTLINE_COLOR)
+    credits_lbl = render('Credits', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
     quit_game_lbl = render('Quit Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
 
     github_obj = BrowserLink()
-    
+
     # game subfunctions
     def records_window():
         NewGame.records_screen()
         return True, 'NO_NAME'
 
-
     def draw_window():
-        screen.blit(in_game_bg, (0,0)) # TODO in-game bg screen
+        screen.blit(in_game_bg, (0, 0))  # TODO in-game bg screen
 
         hp_lbl = font.render(f"Lives: {lives}", 1, (255, 255, 255))
         scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
@@ -462,9 +473,9 @@ def game():
 
         if lvl_passing_time_active > 0:
             lvl_passing_lbl = game_title_font.render(f'Level    {level}', 1, (255, 255, 255))
-            screen.blit(lvl_passing_lbl, (WIDTH/2 - lvl_passing_lbl.get_width()/2, HEIGHT/2 - lvl_passing_lbl.get_height()))
+            screen.blit(lvl_passing_lbl,
+                        (WIDTH / 2 - lvl_passing_lbl.get_width() / 2, HEIGHT / 2 - lvl_passing_lbl.get_height()))
             lvl_passing_time_active -= 1
-
 
         spawn_nonplayers()
         ship.draw(screen)
@@ -493,15 +504,18 @@ def game():
 
     def draw_menu_options():
 
-        def new_game_opt(): # done
+        def new_game_opt():  # done
             exit('new_game_opt')
+
         def records_opt():
             print('still working on it')
             exit('records_opt')
-        def credits_opt(): # done
+
+        def credits_opt():  # done
             print('still working on it')
             exit('credits_opt')
-        def quit_game_opt(): # done
+
+        def quit_game_opt():  # done
             exit('quit_game_opt')
 
         MENU_OPTIONS_DICT = {
@@ -512,42 +526,38 @@ def game():
             -1: quit_game_opt
         }
 
-
         def label_pos(label_obj):
-            x_pos = WIDTH/2 - label_obj.get_width()/2
+            x_pos = WIDTH / 2 - label_obj.get_width() / 2
             y_pos = {
-                new_game_lbl : 250,
-                records_lbl : 300,
-                credits_lbl : 350,
-                quit_game_lbl : 400
+                new_game_lbl: 250,
+                records_lbl: 300,
+                credits_lbl: 350,
+                quit_game_lbl: 400
             }
-            return(x_pos, y_pos[label_obj])
+            return (x_pos, y_pos[label_obj])
 
-        #SCREEN SELECTION ARROW
+        # SCREEN SELECTION ARROW
         def arrow_pos(label_x, label_y):
-            obj_wid = WIDTH/2 - label_x
+            obj_wid = WIDTH / 2 - label_x
             arrow_x = label_x + obj_wid * 2 + 15
             arrow_y = label_y - 10
-            return(arrow_x, arrow_y)
+            return (arrow_x, arrow_y)
 
         arrow_pos_arr = [
-            arrow_pos(label_pos(new_game_lbl)[0],label_pos(new_game_lbl)[1]),
+            arrow_pos(label_pos(new_game_lbl)[0], label_pos(new_game_lbl)[1]),
             arrow_pos(label_pos(records_lbl)[0], label_pos(records_lbl)[1]),
-                      arrow_pos(label_pos(credits_lbl)[0], label_pos(credits_lbl)[1]),
-                      arrow_pos(label_pos(quit_game_lbl)[0], label_pos(quit_game_lbl)[1])
+            arrow_pos(label_pos(credits_lbl)[0], label_pos(credits_lbl)[1]),
+            arrow_pos(label_pos(quit_game_lbl)[0], label_pos(quit_game_lbl)[1])
         ]
         arrow_current = 0
 
-
-
         def label_blit(label_obj):
             screen.blit(label_obj, (label_pos(label_obj)))
+
         main_menu = True
 
         main_menu_ani_count = 0
         menu_sub_count = 0
-
-
 
         comet_cd = 0
 
@@ -574,7 +584,6 @@ def game():
             label_blit(quit_game_lbl)
             screen.blit(arrow_img, (arrow_pos_arr[arrow_current][0], arrow_pos_arr[arrow_current][1]))
             github_obj.draw()
-
 
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -619,10 +628,8 @@ def game():
                 if keys[pg.K_F1]:
                     print('-DEBUG MODE-')
                     main_menu = False
-            screen.blit(game_title_lbl, (WIDTH/2 - game_title_lbl.get_width()/2, 100))
+            screen.blit(game_title_lbl, (WIDTH / 2 - game_title_lbl.get_width() / 2, 100))
             pg.display.update()
-
-
 
     # main menu
     draw_menu_options()
@@ -631,7 +638,6 @@ def game():
     mixer.music.load('sounds/bg_music.mp3')
     mixer.music.play(-1)
     mixer.music.set_volume(0.3)
-
 
     # gameloop
     while running:
@@ -686,7 +692,9 @@ def game():
 
         draw_window()
 
+
 first_time = True  # complement variable to player_death() to only be played once
+
 
 def player_death(score):
     mixer.music.fadeout(1500)
@@ -696,7 +704,7 @@ def player_death(score):
     esc_dead_label = render("press -ESC- to go to the Main Menu", medium_font, (FONT_COLOR), (OUTLINE_COLOR))
     screen.blit(esc_dead_label, (WIDTH / 2 - esc_dead_label.get_width() / 2, 300))
     screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
-    global first_time # working
+    global first_time  # working
     if first_time:
         first_time = False
         save_progress(score)
