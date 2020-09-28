@@ -9,7 +9,7 @@ import time
 from render_func import render
 import math
 import csv
-
+import webbrowser
 
 pg.init()
 pg.font.init()
@@ -256,11 +256,28 @@ class Ship:
                         print('bullet collided')
                         print(f'asteroid {obj}\nsupposedly took 1 damage and has {obj.health} hp')
 
+class BrowserLink():
+    font = pg.font.Font('font/notalot35.ttf', 30)
+    def __init__(self, url = 'https://github.com/fredmnpinto/ShipX'):
+        self.url = url
+        self.label = render(self.url, self.font, FONT_COLOR, OUTLINE_COLOR)
+        self.x = 5
+        self.y = 5
+        self.w = self.label.get_width()
+        self.h = self.label.get_height()
+        self.rect = pg.rect.Rect(self.x, self.y, self.w, self.h)
+        # self.mask = pg.mask.from_surface(self.rect)
+
+    def draw(self):
+        screen.blit(self.label, (self.x, self.y))
+
+    def clicked(self):
+        webbrowser.open(self.url)
 
 class Asteroid:
     ASTEROID_DIC = {
-        2: (small_astoroid, 3, 1, 1),
-        1: (medium_astoroid, 2, 2, 3),
+        2: (small_astoroid, 3, 1, 2),
+        1: (medium_astoroid, 2, 2, 4),
         0: (large_astoroid, 1, 5, 10)
     }
 
@@ -325,13 +342,11 @@ def save_progress(score = 0):
         data = csv.DictReader(fr)
         data_copy = {}
         for row in data:
-            data_copy[row['username']] = row['highest_score']
+            data_copy[row['username']] = int(row['highest_score'])
 
         pprint(data_copy)
 
         data_copy[ship.name] = score
-
-        pprint(data_copy)
 
         with open('records.csv', 'w', newline='') as fw:  # working
             fieldnames = ['username', 'highest_score']
@@ -345,6 +360,7 @@ main_menu_obj = MainMenu()
 
 
 def credits():
+    github_obj = BrowserLink()
     credits_arr = [
         'General Fullstack Director:        Frederico Pinto',
         'Co-Creative Director:      Joao Pedro Ferronato',
@@ -354,16 +370,17 @@ def credits():
     credits_font = pg.font.Font('font/notalot35.ttf', 30)
     credits_title_font = pg.font.Font('font/notalot35.ttf', 100)
     credits_title_lbl = render('Credits', credits_title_font, FONT_COLOR, OUTLINE_COLOR)
-    esc_font = pg.font.Font('font/notalot35.ttf', 50)
+    esc_font = pg.font.Font('font/notalot35.ttf', 40)
     esc_lbl = esc_font.render('press -ESC- to go back', 1, FONT_COLOR)
 
     credits_on_screen = True
 
     while credits_on_screen:
         main_menu_obj.draw_menu_bg()
+        github_obj.draw()
         credits_pos = 250
         screen.blit(credits_title_lbl, (WIDTH/2 - credits_title_lbl.get_width()/2, 100))
-        screen.blit(esc_lbl, (HEIGHT - esc_lbl.get_height() - 5, WIDTH - esc_lbl.get_width() - 5))
+        screen.blit(esc_lbl, (WIDTH - esc_lbl.get_width() - 5, HEIGHT - esc_lbl.get_height() - 5))
         for txt in credits_arr:
             new_lbl = render(txt, credits_font, FONT_COLOR, OUTLINE_COLOR)
             screen.blit(new_lbl, (WIDTH/2 - new_lbl.get_width()/2, credits_pos))
@@ -372,10 +389,19 @@ def credits():
             keys = pg.key.get_pressed()
             if event.type == pg.QUIT:
                 exit('credits_quit')
+            if event.type == pg.MOUSEBUTTONDOWN:
+                # If the user clicked on the input_box rect.
+                if github_obj.rect.collidepoint(event.pos):
+                    click_snd.play()
+                    time.sleep(0.1)
+                    github_obj.clicked()
             if keys[pg.K_ESCAPE]:
                 credits_on_screen = False
         pg.display.update()
     return True, 'NO_NAME_YET'
+
+level = 1
+lvl_passing_time_active = 120
 
 def game():
     running = True
@@ -385,12 +411,9 @@ def game():
     lives = 5
 
 
-
     asteroids = []
     asteroid_cd = 40
     bullets_cd = 20
-
-
 
     laser_lst = []
 
@@ -406,6 +429,7 @@ def game():
 
         # --MENU OPTIONS--
     menu_options_font = font
+    link_font = pg.font.Font('font/notalot35.ttf', 30)
 
 
     game_title_lbl = render('ShipX', game_title_font, FONT_COLOR, OUTLINE_COLOR)
@@ -415,9 +439,12 @@ def game():
     credits_lbl = render('Credits',menu_options_font, FONT_COLOR, OUTLINE_COLOR)
     quit_game_lbl = render('Quit Game', menu_options_font, FONT_COLOR, OUTLINE_COLOR)
 
+    github_obj = BrowserLink()
+    
     # game subfunctions
-    def records_window(): # TODO finish records_window
-        pass
+    def records_window():
+        NewGame.records_screen()
+        return True, 'NO_NAME'
 
 
     def draw_window():
@@ -426,15 +453,15 @@ def game():
         hp_lbl = font.render(f"Lives: {lives}", 1, (255, 255, 255))
         scr_lbl = font.render(f"Score: {score}", 1, (255, 255, 255))
 
-        level = score % 250
-        lvl_passing_time_active = lvl_passing_time_active_g
+        global level
+        global lvl_passing_time_active
 
-        if score == 250:
-            level = 2
-            lvl_passing_time_active += 120
+        if score % 250 == 0:
+            level = int((score / 250) + 1)
+            lvl_passing_time_active = 120
 
         if lvl_passing_time_active > 0:
-            lvl_passing_lbl = game_title_font.render(f'Level {level}', 1, (255, 255, 255))
+            lvl_passing_lbl = game_title_font.render(f'Level    {level}', 1, (255, 255, 255))
             screen.blit(lvl_passing_lbl, (WIDTH/2 - lvl_passing_lbl.get_width()/2, HEIGHT/2 - lvl_passing_lbl.get_height()))
             lvl_passing_time_active -= 1
 
@@ -446,6 +473,9 @@ def game():
 
         if ship.dead:
             player_death(score)
+            if keys[pg.K_ESCAPE]:
+                print("Yes it was pressed")
+                return game()
 
         pg.display.update()
 
@@ -477,7 +507,7 @@ def game():
         MENU_OPTIONS_DICT = {
             0: new_game,
             -4: new_game,
-            -3: records_opt,
+            -3: records_window,
             -2: credits,
             -1: quit_game_opt
         }
@@ -543,7 +573,7 @@ def game():
             label_blit(credits_lbl)
             label_blit(quit_game_lbl)
             screen.blit(arrow_img, (arrow_pos_arr[arrow_current][0], arrow_pos_arr[arrow_current][1]))
-
+            github_obj.draw()
 
 
             for event in pg.event.get():
@@ -552,7 +582,12 @@ def game():
                     exit()
 
                 keys = pg.key.get_pressed()
-
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    # If the user clicked on the input_box rect.
+                    if github_obj.rect.collidepoint(event.pos):
+                        click_snd.play()
+                        time.sleep(0.1)
+                        github_obj.clicked()
                 if keys[pg.K_UP] or keys[pg.K_w]:
                     if arrow_current > -4:
                         print(f'[W] antes :{arrow_current}')
@@ -573,7 +608,7 @@ def game():
                     click_snd.play()
                     time.sleep(0.2)
 
-                if keys[pg.K_e] or keys[pg.K_RETURN]:
+                if keys[pg.K_e] or keys[pg.K_RETURN] or keys[pg.K_SPACE]:
                     print(f'going for MENU_OPTIONS_DICT[{arrow_current}]')
                     bong_snd.play()
                     time.sleep(0.3)
@@ -628,6 +663,7 @@ def game():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
+
         if bullets_cd > 0:
             bullets_cd -= 1
         if not ship.dead:
@@ -647,6 +683,7 @@ def game():
                 FPS = 180
             if keys[pg.K_o]:
                 FPS = 60
+
         draw_window()
 
 first_time = True  # complement variable to player_death() to only be played once
@@ -654,12 +691,16 @@ first_time = True  # complement variable to player_death() to only be played onc
 def player_death(score):
     mixer.music.fadeout(1500)
     game_title_font = pg.font.Font('font/notalot35.ttf', 150)
+    medium_font = pg.font.Font("font/notalot35.ttf", 50)
     lost_label = render("You lost", game_title_font, (FONT_COLOR), (OUTLINE_COLOR))
+    esc_dead_label = render("press -ESC- to go to the Main Menu", medium_font, (FONT_COLOR), (OUTLINE_COLOR))
+    screen.blit(esc_dead_label, (WIDTH / 2 - esc_dead_label.get_width() / 2, 300))
     screen.blit(lost_label, (WIDTH / 2 - lost_label.get_width() / 2, 200))
-    global first_time
-    if first_time: # working
+    global first_time # working
+    if first_time:
         first_time = False
         save_progress(score)
+
 
 if __name__ == '__main__':
     game()
